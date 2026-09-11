@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#05070f">
+<title>NEON SNAKE 3D — Неоновая змейка</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐍</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+</head>
+<body>
+<div id="game-container"></div>
+
+<!-- Атмосферные оверлеи -->
+<div id="vignette"></div>
+<div id="effect-tint"></div>
+<div id="damage-flash"></div>
+<div id="popups"></div>
+
+<!-- HUD -->
+<div id="hud" class="hidden">
+  <div class="hud-top">
+    <div class="hud-left">
+      <div id="hud-level" class="hud-badge">1 · Неоновый сад</div>
+      <div class="progress-wrap">
+        <div class="progress-label"><span>🍎 <span id="hud-food">0/8</span></span></div>
+        <div class="progress-bar"><div id="hud-progress" class="progress-fill"></div></div>
+      </div>
+    </div>
+    <div class="hud-center">
+      <div id="hud-score" class="hud-score">0</div>
+      <div class="hud-score-label">SCORE</div>
+    </div>
+    <div class="hud-right">
+      <div class="hud-badge dim">🏆 <span id="hud-best">0</span></div>
+      <div class="hud-buttons">
+        <button id="btn-camera" class="icon-btn" title="Камера (C)">🎥</button>
+        <button id="btn-sound" class="icon-btn" title="Звук (M)">🔊</button>
+        <button id="btn-pause" class="icon-btn" title="Пауза (Esc)">⏸</button>
+      </div>
+    </div>
+  </div>
+  <div id="effects-row"></div>
+  <div id="combo-badge" class="hidden">🔥 x<span id="combo-num">2</span> COMBO</div>
+  <div id="hint">⌨️ WASD / стрелки · 📱 свайпы · ⏸ пробел — пауза</div>
+</div>
+
+<!-- Главное меню -->
+<div id="screen-menu" class="screen">
+  <div class="menu-panel">
+    <div class="logo-snake">🐍</div>
+    <h1 class="game-title">NEON <span>SNAKE</span> 3D</h1>
+    <p class="tagline">Ешь · Расти · Выживи · Пройди все 6 миров</p>
+    <button id="btn-play" class="btn btn-primary btn-big">▶&nbsp; ИГРАТЬ</button>
+
+    <h2 class="section-title">Выбери мир</h2>
+    <div id="level-grid" class="level-grid"></div>
+
+    <h2 class="section-title">Скин змейки</h2>
+    <div id="skin-row" class="skin-row"></div>
+
+    <div class="settings-row">
+      <button id="btn-menu-sound" class="btn btn-ghost">🔊 Звук: вкл</button>
+      <button id="btn-menu-music" class="btn btn-ghost">🎵 Музыка: вкл</button>
+      <button id="btn-menu-camera" class="btn btn-ghost">🎥 Камера: следящая</button>
+    </div>
+
+    <div class="controls-help">
+      <div><kbd>WASD</kbd><kbd>←↑↓→</kbd> движение</div>
+      <div><kbd>Space</kbd> пауза · <kbd>C</kbd> камера · <kbd>M</kbd> звук</div>
+      <div class="power-legend">
+        <span>🧲 магнит</span><span>🐢 slow-mo</span><span>👻 призрак</span>
+        <span>⭐ x2 очки</span><span>🛡 щит</span><span>✂️ −хвост</span>
+      </div>
+    </div>
+    <p class="credits">Фон меню — живая AI-змейка играет сама 🤖 · v1.0</p>
+  </div>
+</div>
+
+<!-- Пауза -->
+<div id="screen-pause" class="screen hidden">
+  <div class="modal">
+    <h2>⏸ ПАУЗА</h2>
+    <div class="modal-score"><span id="pause-score">0</span><small>очков</small></div>
+    <button id="btn-resume" class="btn btn-primary">▶ Продолжить</button>
+    <button id="btn-restart" class="btn">↻ Заново</button>
+    <button id="btn-pause-camera" class="btn btn-ghost">🎥 Камера: следящая</button>
+    <button id="btn-quit" class="btn btn-ghost">🏠 В меню</button>
+  </div>
+</div>
+
+<!-- Поражение -->
+<div id="screen-over" class="screen hidden">
+  <div class="modal">
+    <h2 class="danger">💀 GAME OVER</h2>
+    <div id="over-newbest" class="newbest hidden">🏆 НОВЫЙ РЕКОРД!</div>
+    <div class="stats">
+      <div class="stat"><b id="over-score">0</b><span>очков</span></div>
+      <div class="stat"><b id="over-food">0</b><span>съедено</span></div>
+      <div class="stat"><b id="over-combo">0</b><span>макс. комбо</span></div>
+      <div class="stat"><b id="over-best">0</b><span>рекорд</span></div>
+    </div>
+    <button id="btn-retry" class="btn btn-primary">↻ Ещё раз</button>
+    <button id="btn-over-menu" class="btn btn-ghost">🏠 В меню</button>
+  </div>
+</div>
+
+<!-- Уровень пройден -->
+<div id="screen-complete" class="screen hidden">
+  <div class="modal">
+    <h2 class="success">✨ МИР ПРОЙДЕН!</h2>
+    <div id="complete-stars" class="stars">★★★</div>
+    <div class="stats">
+      <div class="stat"><b id="complete-score">0</b><span>очков</span></div>
+      <div class="stat"><b id="complete-food">0</b><span>съедено</span></div>
+      <div class="stat"><b id="complete-combo">0</b><span>макс. комбо</span></div>
+    </div>
+    <button id="btn-next" class="btn btn-primary">⏭ Следующий мир</button>
+    <button id="btn-replay" class="btn">↻ Переиграть</button>
+    <button id="btn-complete-menu" class="btn btn-ghost">🏠 В меню</button>
+  </div>
+</div>
+
+<div id="loading">
+  <div class="loader-snake">🐍</div>
+  <p>Загрузка неона…</p>
+</div>
+<div id="webgl-error" class="hidden">😢 WebGL недоступен в этом браузере.<br>Попробуй Chrome, Edge, Firefox или Safari.</div>
+
+<script type="module" src="main.js"></script>
+</body>
+</html>
