@@ -1,0 +1,11 @@
+{
+  "name": "hamster-slingshot",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Хомяк-Мститель: Рогатка Судьбы — платформер в стиле Марио про боевого хомяка с рогаткой",
+  "type": "module",
+  "scripts": {
+    "start": "npx --yes serve . -l 3000",
+    "dev": "npx --yes serve . -l 3000"
+  }
+}
